@@ -1,103 +1,59 @@
-# Terraform Practice Project
+# Terraform Practice Project - Matt
 
-This project demonstrates advanced Terraform state management and infrastructure deployment on AWS.
+Terraform infrastructure deployment on AWS with complete VPC setup and NGINX web server.
 
-## Prerequisites
+## What I Built
 
-- Terraform installed locally (v1.2.0+)
-- AWS CLI configured with appropriate credentials
-- An AWS account with permissions to create resources
+**Challenge 1**: Basic EC2 instance with proper AWS provider configuration  
+**Challenge 2**: Complete web server infrastructure with VPC, security groups, and SSH access
 
 ## Project Structure
 
 ```
 terraform-practice/
-├── main.tf              # Main infrastructure configuration
-├── providers.tf         # AWS provider configuration
-├── variables.tf         # Input variables
-├── backend.tf           # S3 backend configuration (to be enabled)
-├── scripts/
-│   └── setup_web_app.sh # Script for setting up the Python web application
-└── ssh/
-    ├── terraform-key     # Private SSH key (gitignored)
-    └── terraform-key.pub # Public SSH key
+├── main.tf              # VPC, EC2, security groups, SSH keys
+├── providers.tf         # AWS provider with required providers (aws, tls, local)
+├── variables.tf         # Configuration variables
+├── outputs.tf           # IP addresses and SSH command
+└── .ssh/                # Auto-generated SSH keys (terraform_rsa)
 ```
 
-## Setup Instructions
+## Quick Setup
 
-### 1. Install Terraform
+1. **Configure AWS credentials**:
+   ```bash
+   aws configure
+   ```
 
-If not already installed:
+2. **Deploy infrastructure**:
+   ```bash
+   terraform init
+   terraform apply
+   ```
 
-```bash
-# For macOS with Homebrew
-brew install terraform
-```
+3. **Access the web server**:
+   - **Web**: Visit the IP from output (e.g., http://56.124.95.35)
+   - **SSH**: Use the command from output (e.g., `ssh -i .ssh/terraform_rsa ubuntu@56.124.95.35`)
 
-### 2. Create S3 Bucket for State Management
+## What Gets Created
 
-Create an S3 bucket named `matt-terraform-bucket` in the AWS console or using AWS CLI:
+- **VPC**: Custom virtual private cloud (10.0.0.0/16)
+- **Public Subnet**: Internet-accessible subnet (10.0.1.0/24)
+- **Security Group**: SSH (22), HTTP (80), HTTPS (443) access
+- **EC2 Instance**: Ubuntu 22.04 with NGINX pre-installed
+- **SSH Keys**: Auto-generated RSA 4096-bit key pair
+- **NGINX**: Serves "Hello from Terraform by Matt challenge 2!"
 
-```bash
-aws s3api create-bucket \
-  --bucket mattenarle-terraform-bucket \
-  --region sa-east-1 \
-  --create-bucket-configuration LocationConstraint=sa-east-1
-```
+## Key Features
 
-Enable bucket versioning:
-
-```bash
-aws s3api put-bucket-versioning \
-  --bucket matt-terraform-bucket \
-  --versioning-configuration Status=Enabled
-```
-
-### 3. Configure Backend
-
-After creating the S3 bucket, uncomment and update the backend configuration in `backend.tf`.
-
-### 4. Initialize and Apply Terraform Configuration
-
-```bash
-# Initialize Terraform
-terraform init
-
-# Preview changes
-terraform plan
-
-# Apply changes
-terraform apply
-```
-
-### 5. Access the EC2 Instance
-
-After successful deployment, use the SSH key to connect to the instance:
-
-```bash
-ssh -i ssh/terraform-key ubuntu@$(terraform output -raw web_instance_public_ip)
-```
-
-The web application will be accessible at: http://[EC2_PUBLIC_IP]
-
-## Best Practices Implemented
-
-- **Remote State Management**: Using S3 for secure, centralized state storage
-- **Infrastructure as Code**: Complete infrastructure defined in version-controlled code
-- **Security**: Custom VPC with proper security groups and SSH key authentication
-- **Automation**: Automated web application deployment via user_data script
-- **Modularity**: Separated configuration files for better organization
-- **Documentation**: Comprehensive README with setup instructions
+✅ **Auto-generated SSH keys** - No manual key management  
+✅ **VPC networking** - Secure isolated environment  
+✅ **Security groups** - Proper firewall rules  
+✅ **Web server ready** - NGINX installed and configured  
+✅ **One-command deployment** - Complete infrastructure in minutes
 
 ## Cleanup
-
-To destroy all created resources:
 
 ```bash
 terraform destroy
 ```
-
-## Notes
-
-- This is a development environment setup. For production, additional security measures would be recommended.
-- The SSH key is generated locally and should be kept secure.

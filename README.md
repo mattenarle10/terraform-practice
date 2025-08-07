@@ -41,8 +41,8 @@ Create an S3 bucket named `matt-terraform-bucket` in the AWS console or using AW
 ```bash
 aws s3api create-bucket \
   --bucket matt-terraform-bucket \
-  --region us-east-2 \
-  --create-bucket-configuration LocationConstraint=us-east-2
+  --region sa-east-1 \
+  --create-bucket-configuration LocationConstraint=sa-east-1
 ```
 
 Enable bucket versioning:

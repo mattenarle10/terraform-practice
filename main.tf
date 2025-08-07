@@ -123,7 +123,7 @@ resource "aws_instance" "web" {
               apt-get install -y nginx python3 python3-pip
               systemctl enable nginx
               systemctl start nginx
-              echo '<html><body><h1>Hello from Terraform!</h1></body></html>' > /var/www/html/index.html
+              echo '<html><body><h1>Hello from Terraform by Matt challenge 2!</h1></body></html>' > /var/www/html/index.html
               EOF
   
   tags = {

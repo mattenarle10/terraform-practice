@@ -131,20 +131,26 @@ resource "aws_instance" "web" {
   }
 }
 
-# Create SSH key pair
+# Generate SSH key pair dynamically
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "local_file" "private_key" {
+  content  = tls_private_key.ssh_key.private_key_pem
+  filename = "./.ssh/terraform_rsa"
+  file_permission = "0600"
+}
+
+resource "local_file" "public_key" {
+  content  = tls_private_key.ssh_key.public_key_openssh
+  filename = "./.ssh/terraform_rsa.pub"
+  file_permission = "0644"
+}
+
 resource "aws_key_pair" "deployer" {
-  key_name   = "matt-terraform-key"
-  public_key = file("${path.module}/ssh/terraform-key.pub")
+  key_name   = "matt-terraform-ubuntu-ssh-key"
+  public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
-# Output the public IP of the instance
-output "web_instance_public_ip" {
-  description = "Public IP address of the EC2 instance"
-  value       = aws_instance.web.public_ip
-}
-
-# Output the public DNS of the instance
-output "web_instance_public_dns" {
-  description = "Public DNS of the EC2 instance"
-  value       = aws_instance.web.public_dns
-}

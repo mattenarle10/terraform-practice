@@ -40,7 +40,7 @@ Create an S3 bucket named `matt-terraform-bucket` in the AWS console or using AW
 
 ```bash
 aws s3api create-bucket \
-  --bucket matt-terraform-bucket \
+  --bucket mattenarle-terraform-bucket \
   --region sa-east-1 \
   --create-bucket-configuration LocationConstraint=sa-east-1
 ```

@@ -167,78 +167,34 @@ resource "aws_s3_bucket_policy" "product_images_public" {
   depends_on = [aws_s3_bucket_public_access_block.product_images_pab]
 }
 
-# IAM role and instance profile to allow EC2 -> DynamoDB access
-data "aws_iam_policy_document" "ec2_assume_role_policy" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
+# IAM moved to a module
+module "ec2_instance_profile" {
+  source       = "./modules/ec2_instance_profile"
+  profile_name = local.team_name
+  iam_policies = [
+    {
+      effect = "Allow"
+      actions = [
+        "dynamodb:PutItem",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem"
+      ]
+      resources = [
+        aws_dynamodb_table.products_table.arn
+      ]
+    },
+    {
+      effect = "Allow"
+      actions = ["s3:PutObject", "s3:PutObjectAcl"]
+      resources = ["${aws_s3_bucket.product_images.arn}/*"]
+    },
+    {
+      effect = "Allow"
+      actions = ["s3:ListBucket"]
+      resources = [aws_s3_bucket.product_images.arn]
     }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "ec2_role" {
-  name               = "${local.team_name}-ec2-role"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role_policy.json
-}
-
-data "aws_iam_policy_document" "dynamodb_access_policy" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "dynamodb:PutItem",
-      "dynamodb:Scan",
-      "dynamodb:UpdateItem",
-      "dynamodb:DeleteItem"
-    ]
-    resources = [
-      aws_dynamodb_table.products_table.arn
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "dynamodb_access" {
-  name   = "${local.team_name}-dynamodb-access"
-  role   = aws_iam_role.ec2_role.id
-  policy = data.aws_iam_policy_document.dynamodb_access_policy.json
-}
-
-data "aws_iam_policy_document" "s3_upload_policy" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "s3:PutObject",
-      "s3:PutObjectAcl"
-    ]
-    resources = [
-      "${aws_s3_bucket.product_images.arn}/*"
-    ]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "s3:ListBucket"
-    ]
-    resources = [
-      aws_s3_bucket.product_images.arn
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "s3_upload_access" {
-  name   = "${local.team_name}-s3-upload-access"
-  role   = aws_iam_role.ec2_role.id
-  policy = data.aws_iam_policy_document.s3_upload_policy.json
-}
-
-resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "${local.team_name}-ec2-profile"
-  role = aws_iam_role.ec2_role.name
+  ]
 }
 
 # Create EC2 Instance
@@ -248,7 +204,7 @@ resource "aws_instance" "web" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.web.id]
   key_name               = aws_key_pair.deployer.key_name
-  iam_instance_profile   = aws_iam_instance_profile.ec2_instance_profile.name
+  iam_instance_profile   = module.ec2_instance_profile.instance_profile_name
 
   user_data = <<-EOF
               #!/bin/bash

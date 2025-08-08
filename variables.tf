@@ -4,6 +4,12 @@ variable "region" {
   default     = "sa-east-1" # São Paulo region
 }
 
+variable "team_name" {
+  description = "Team name used for tagging and resource names (S3-safe: letters, numbers, hyphens)"
+  type        = string
+  default     = "matt"
+}
+
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string

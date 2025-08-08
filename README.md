@@ -4,8 +4,11 @@ Terraform infrastructure deployment on AWS with complete VPC setup and NGINX web
 
 ## What I Built
 
-**Challenge 1**: Basic EC2 instance with proper AWS provider configuration  
-**Challenge 2**: Complete web server infrastructure with VPC, security groups, and SSH access
+**Challenge 1**: First Deployment on Terraform
+   Activity 1: Create your first EC2 Instance 
+   Activity 2: Nginx Web Server
+   Activity 3: Add in a basic Python application 
+   Bonus: Create Product
 
 ## Project Structure
 

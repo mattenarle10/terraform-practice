@@ -31,7 +31,6 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone       = "sa-east-1a"
 
   tags = {
     Name = "${local.team_name}-public-subnet"
@@ -69,7 +68,7 @@ resource "aws_route_table_association" "public" {
 
 # Create Security Group
 resource "aws_security_group" "web" {
-  name        = "${local.team_name_safe}-allow-ssh-http"
+  name        = "${local.team_name}-allow-ssh-http"
   description = "Allow HTTP, HTTPS and SSH traffic"
   vpc_id      = aws_vpc.main.id
 
@@ -111,7 +110,7 @@ resource "aws_security_group" "web" {
 
 # DynamoDB table for products
 resource "aws_dynamodb_table" "products_table" {
-  name         = "${local.team_name_safe}-products-table"
+  name         = "${local.team_name}-products-table"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "product_id"
 
@@ -133,7 +132,7 @@ resource "aws_dynamodb_table" "products_table" {
 
 # S3 bucket for product images (public read for objects)
 resource "aws_s3_bucket" "product_images" {
-  bucket = "${local.team_name_s3}-product-images"
+  bucket = "${local.team_name}-product-images"
 
   tags = {
     Name        = "${local.team_name}-product-images"
@@ -183,7 +182,7 @@ data "aws_iam_policy_document" "ec2_assume_role_policy" {
 }
 
 resource "aws_iam_role" "ec2_role" {
-  name               = "${local.team_name_safe}-ec2-role"
+  name               = "${local.team_name}-ec2-role"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role_policy.json
 }
 
@@ -192,7 +191,9 @@ data "aws_iam_policy_document" "dynamodb_access_policy" {
     effect = "Allow"
     actions = [
       "dynamodb:PutItem",
-      "dynamodb:Scan"
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem"
     ]
     resources = [
       aws_dynamodb_table.products_table.arn
@@ -201,7 +202,7 @@ data "aws_iam_policy_document" "dynamodb_access_policy" {
 }
 
 resource "aws_iam_role_policy" "dynamodb_access" {
-  name   = "${local.team_name_safe}-dynamodb-access"
+  name   = "${local.team_name}-dynamodb-access"
   role   = aws_iam_role.ec2_role.id
   policy = data.aws_iam_policy_document.dynamodb_access_policy.json
 }
@@ -230,13 +231,13 @@ data "aws_iam_policy_document" "s3_upload_policy" {
 }
 
 resource "aws_iam_role_policy" "s3_upload_access" {
-  name   = "${local.team_name_safe}-s3-upload-access"
+  name   = "${local.team_name}-s3-upload-access"
   role   = aws_iam_role.ec2_role.id
   policy = data.aws_iam_policy_document.s3_upload_policy.json
 }
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "${local.team_name_safe}-ec2-profile"
+  name = "${local.team_name}-ec2-profile"
   role = aws_iam_role.ec2_role.name
 }
 
@@ -315,7 +316,7 @@ resource "local_file" "public_key" {
 }
 
 resource "aws_key_pair" "deployer" {
-  key_name   = "${local.team_name_safe}-ubuntu-ssh-key"
+  key_name   = "${local.team_name}-ubuntu-ssh-key"
   public_key = tls_private_key.ssh_key.public_key_openssh
 }
 

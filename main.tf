@@ -65,26 +65,10 @@ resource "aws_security_group" "web" {
   }
 }
 
-# DynamoDB table for products
-resource "aws_dynamodb_table" "products_table" {
-  name         = "${local.team_name}-products-table"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "product_id"
-
-  attribute {
-    name = "product_id"
-    type = "S"
-  }
-
-  ttl {
-    attribute_name = "TimeToExist"
-    enabled        = true
-  }
-
-  tags = {
-    Name        = "${local.team_name}-products-table"
-    Environment = "production"
-  }
+# DynamoDB moved to a module
+module "dynamodb" {
+  source     = "./modules/dynamodb"
+  table_name = "${local.team_name}-products-table"
 }
 
 # S3 bucket for product images (public read for objects)
@@ -142,7 +126,7 @@ module "ec2_instance_profile" {
         "dynamodb:DeleteItem"
       ]
       resources = [
-        aws_dynamodb_table.products_table.arn
+        module.dynamodb.table_arn
       ]
     },
     {
@@ -180,7 +164,7 @@ resource "aws_instance" "web" {
 
               # Set environment for the app
               export AWS_REGION=${local.assigned_aws_region}
-              export DYNAMODB_TABLE_NAME=${aws_dynamodb_table.products_table.name}
+              export DYNAMODB_TABLE_NAME=${module.dynamodb.table_name}
               export S3_BUCKET_NAME=${aws_s3_bucket.product_images.bucket}
 
               # Install Python dependencies

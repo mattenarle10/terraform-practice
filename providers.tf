@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     aws = {
-      source    = "hashicorp/aws"
-      version   = "~> 4.18.0"
+      source  = "hashicorp/aws"
+      version = "~> 4.18.0"
     }
     tls = {
       source  = "hashicorp/tls"
@@ -18,8 +18,8 @@ terraform {
 }
 
 provider "aws" {
-  region = "sa-east-1"  
-  
+  region = "sa-east-1"
+
   default_tags {
     tags = {
       Project     = "TerraformPractice"

@@ -12,3 +12,8 @@ output "ssh_connection_command" {
   description = "Command to SSH into the instance"
   value       = "ssh -i .ssh/terraform_rsa ubuntu@${aws_instance.web.public_ip}"
 }
+
+output "products_api_url" {
+  description = "Products API URL"
+  value       = "http://${aws_instance.web.public_ip}/products"
+}

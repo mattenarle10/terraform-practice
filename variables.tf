@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region to deploy resources"
   type        = string
-  default     = "sa-east-1"  # São Paulo region
+  default     = "sa-east-1" # São Paulo region
 }
 
 variable "instance_type" {

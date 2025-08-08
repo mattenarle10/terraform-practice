@@ -171,6 +171,10 @@ resource "aws_s3_bucket_policy" "product_images_public" {
 module "ec2_instance_profile" {
   source       = "./modules/ec2_instance_profile"
   profile_name = local.team_name
+  # Optional explicit names to match existing resources
+  role_name             = "${local.team_name}-ec2-web-role"
+  instance_profile_name = "${local.team_name}-ec2-web-profile"
+  policy_name           = "${local.team_name}-ec2-web-access"
   iam_policies = [
     {
       effect = "Allow"

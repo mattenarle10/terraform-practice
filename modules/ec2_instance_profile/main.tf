@@ -23,18 +23,18 @@ data "aws_iam_policy_document" "ec2_access_policy" {
 }
 
 resource "aws_iam_role" "ec2_role" {
-  name               = "${var.profile_name}-ec2-role"
+  name               = coalesce(var.role_name, "${var.profile_name}-ec2-role")
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role_policy.json
 }
 
 resource "aws_iam_role_policy" "dynamodb_access" {
-  name   = "${var.profile_name}-dynamodb-access"
+  name   = coalesce(var.policy_name, "${var.profile_name}-dynamodb-access")
   role   = aws_iam_role.ec2_role.id
   policy = data.aws_iam_policy_document.ec2_access_policy.json
 }
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "${var.profile_name}-ec2-profile"
+  name = coalesce(var.instance_profile_name, "${var.profile_name}-ec2-profile")
   role = aws_iam_role.ec2_role.name
 }
 

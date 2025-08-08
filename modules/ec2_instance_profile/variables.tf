@@ -11,4 +11,22 @@ variable "profile_name" {
   description = "This is the profile's name prefix"
 }
 
+variable "role_name" {
+  type        = string
+  description = "Optional explicit IAM role name to use (overrides default pattern)"
+  default     = null
+}
+
+variable "instance_profile_name" {
+  type        = string
+  description = "Optional explicit IAM instance profile name to use (overrides default pattern)"
+  default     = null
+}
+
+variable "policy_name" {
+  type        = string
+  description = "Optional explicit IAM role policy name to use (overrides default pattern)"
+  default     = null
+}
+
 

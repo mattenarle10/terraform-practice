@@ -33,3 +33,9 @@ variable "public_subnet_cidr" {
   type        = string
   default     = "10.0.1.0/24"
 }
+
+variable "web_count" {
+  description = "Number of EC2 web instances to launch"
+  type        = number
+  default     = 3
+}

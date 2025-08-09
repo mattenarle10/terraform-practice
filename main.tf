@@ -135,8 +135,9 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_lb_target_group_attachment" "web" {
+  count            = var.web_count
   target_group_arn = aws_lb_target_group.app.arn
-  target_id        = aws_instance.web.id
+  target_id        = aws_instance.web[count.index].id
   port             = 80
 }
 
@@ -219,9 +220,10 @@ module "ec2_instance_profile" {
 
 # Create EC2 Instance
 resource "aws_instance" "web" {
+  count                  = var.web_count
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.micro"
-  subnet_id              = module.aws_network.private_subnet_ids[0]
+  subnet_id              = module.aws_network.private_subnet_ids[count.index % length(module.aws_network.private_subnet_ids)]
   vpc_security_group_ids = [aws_security_group.web.id]
   key_name               = aws_key_pair.deployer.key_name
   iam_instance_profile   = module.ec2_instance_profile.instance_profile_name
@@ -270,7 +272,7 @@ resource "aws_instance" "web" {
               EOF
 
   tags = {
-    Name = "${local.team_name}-products-instance"
+    Name = "${local.team_name}-products-instance-${count.index}"
   }
 }
 

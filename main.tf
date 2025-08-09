@@ -20,7 +20,8 @@ module "aws_network" {
   source             = "./modules/vpc"
   name_prefix        = local.team_name
   vpc_cidr           = var.vpc_cidr
-  public_subnet_cidr = var.public_subnet_cidr
+  public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
 }
 
 # Create Security Group
@@ -28,14 +29,6 @@ resource "aws_security_group" "web" {
   name        = "${local.team_name}-allow-ssh-http"
   description = "Allow HTTP, HTTPS and SSH traffic"
   vpc_id      = module.aws_network.vpc_id
-
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   ingress {
     description = "HTTPS"
@@ -50,7 +43,7 @@ resource "aws_security_group" "web" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # In production, restrict to your IP
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -63,6 +56,88 @@ resource "aws_security_group" "web" {
   tags = {
     Name = "${local.team_name}-allow-ssh-http"
   }
+}
+
+# ALB security group (public)
+resource "aws_security_group" "alb" {
+  name        = "${local.team_name}-alb-sg"
+  description = "Allow HTTP from the internet to ALB"
+  vpc_id      = module.aws_network.vpc_id
+
+  ingress {
+    description = "HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${local.team_name}-alb-sg"
+  }
+}
+
+# Restrict instance HTTP to ALB only
+resource "aws_security_group_rule" "web_http_from_alb" {
+  type                     = "ingress"
+  description              = "HTTP from ALB"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.web.id
+  source_security_group_id = aws_security_group.alb.id
+}
+
+# ALB + Target group + Listener
+resource "aws_lb" "app" {
+  name               = "${local.team_name}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = module.aws_network.public_subnet_ids
+
+  tags = { Name = "${local.team_name}-alb" }
+}
+
+resource "aws_lb_target_group" "app" {
+  name     = "${local.team_name}-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = module.aws_network.vpc_id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200-399"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    interval            = 15
+    timeout             = 5
+  }
+}
+
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.app.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
+  }
+}
+
+resource "aws_lb_target_group_attachment" "web" {
+  target_group_arn = aws_lb_target_group.app.arn
+  target_id        = aws_instance.web.id
+  port             = 80
 }
 
 # DynamoDB moved to a module
@@ -146,7 +221,7 @@ module "ec2_instance_profile" {
 resource "aws_instance" "web" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.micro"
-  subnet_id              = module.aws_network.public_subnet_id
+  subnet_id              = module.aws_network.public_subnet_ids[0]
   vpc_security_group_ids = [aws_security_group.web.id]
   key_name               = aws_key_pair.deployer.key_name
   iam_instance_profile   = module.ec2_instance_profile.instance_profile_name

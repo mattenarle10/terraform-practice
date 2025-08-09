@@ -49,6 +49,7 @@ terraform-practice/
 
 3. **Access the app**:
    - **Web**: Visit the ALB URL from outputs (e.g., http://<alb_dns_name>)
+     - Deployed URL: [`http://matt-alb-1493708618.sa-east-1.elb.amazonaws.com/`](http://matt-alb-1493708618.sa-east-1.elb.amazonaws.com/)
    - **SSH**: Use the command from outputs (connects to a private IP via your network tooling)
 
 ## What Gets Created

@@ -221,7 +221,7 @@ module "ec2_instance_profile" {
 resource "aws_instance" "web" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.micro"
-  subnet_id              = module.aws_network.public_subnet_ids[0]
+  subnet_id              = module.aws_network.private_subnet_ids[0]
   vpc_security_group_ids = [aws_security_group.web.id]
   key_name               = aws_key_pair.deployer.key_name
   iam_instance_profile   = module.ec2_instance_profile.instance_profile_name
